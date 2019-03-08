@@ -59,6 +59,13 @@
                     <button class="btn btn-info" onclick="${ info.status == 'active' ?  'screenShot' : `getQr`}('${info.idSocket}')">
                             ${ info.status == 'active' ?  'screenShot' : `getQr`}    
                     </button>
+
+                    ${ info.status == 'active' 
+                        ?  `<button class="btn btn-info" onclick="sendTest('${info.idSocket}')">
+                                SendTest  
+                        </button>` 
+                        : ``
+                    } 
                     `;
 
                     if (info.status == 'active') html+=`<button class="btn btn-danger" onclick="closeSession('${info.idSocket}')">Cerrar sesion</button>`
@@ -85,9 +92,18 @@
             }
         }
 
+        let sendTest = (socketId) => {
+            let num = prompt('¿numero de whatsApp?').trim()
+            if(!isNaN(num)){
+                socket.emit('sendText',(socketId,`"521${num}@c.us"`,'Mensaje de prueba','test'))
+            }else{
+                alert('Error en numero')
+            }
+        }
+
         $( document ).ready( () => {
 
-            socket = io('http://localhost:3000?token='+'masterAccount&root=true');
+            socket = io('http://127.0.0.1:3000/?token='+'masterAccount&root=true');
 
             socket.on('connect',() => {
 
