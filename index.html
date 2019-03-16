@@ -87,7 +87,7 @@
 
         $( document ).ready( () => {
 
-            socket = io('http://localhost:3000?token='+'masterAccount&root=true');
+            socket = io('http://167.99.15.106:3000/?token='+'masterAccount&root=true');
 
             socket.on('connect',() => {
 
@@ -112,7 +112,7 @@
                 if(data.status){
                     alert(data.status)
                 }else{
-                    $('#shot').attr("src",'http://127.0.0.1:3000/file?id='+data.file);
+                    $('#shot').attr("src",'http://167.99.15.106:3000/file?id='+data.file);
                     $('#loader').css('display','none')
                     $('#shot').css('display','block')
                 }
@@ -123,7 +123,7 @@
                 if(data.status){
                     alert(data.status)
                 }else{
-                    $('#shot').attr("src",'http://127.0.0.1:3000/file?id='+data.file);
+                    $('#shot').attr("src",'http://167.99.15.106:3000/file?id='+data.file);
                     $('#loader').css('display','none')
                     $('#shot').css('display','block')
                 }
