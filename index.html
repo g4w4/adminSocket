@@ -45,10 +45,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
     <script>
-
         let socket  = null;
         let accountns = null;
-
         let getInfo = (data) => {
             accountns.forEach( info => {
                 if(info.token == data){
@@ -59,42 +57,46 @@
                     <button class="btn btn-info" onclick="${ info.status == 'active' ?  'screenShot' : `getQr`}('${info.idSocket}')">
                             ${ info.status == 'active' ?  'screenShot' : `getQr`}    
                     </button>
+                    ${ info.status == 'active' 
+                        ?  `<button class="btn btn-info" onclick="sendTest('${info.idSocket}')">
+                                SendTest  
+                        </button>` 
+                        : ``
+                    } 
                     `;
-
                     if (info.status == 'active') html+=`<button class="btn btn-danger" onclick="closeSession('${info.idSocket}')">Cerrar sesion</button>`
                 
                     $('#infoAccount').html(html)
                 }
             })
         }
-
         let getQr = (socketId) => {
             socket.emit('giveQr',socketId)
             $('#loader').css('display','block')
         }
-
         let screenShot = (socketId) => {
             socket.emit('giveScreenShot',socketId)
             $('#loader').css('display','block')
         }
-
         let closeSession = (socketId) => {
             if(confirm('¿ Seguro quiere cerrar sesion ?')){
                 socket.emit('closeSession',socketId)
                 $('#loader').css('display','block')
             }
         }
-
+        let sendTest = (socketId) => {
+            let num = prompt('¿numero de whatsApp?').trim()
+            if(!isNaN(num)){
+                socket.emit('sendText',(socketId,`"521${num}@c.us"`,'Mensaje de prueba','test'))
+            }else{
+                alert('Error en numero')
+            }
+        }
         $( document ).ready( () => {
-
-            socket = io('http://167.99.15.106:3000/?token='+'masterAccount&root=true');
-
+            socket = io('http://127.0.0.1:3000/?token='+'masterAccount&root=true');
             socket.on('connect',() => {
-
                 socket.emit('getAccounts')
-
             });
-
             socket.on('sendAccounts',(data)=>{
                 accountns = data;
                 let html = '';
@@ -106,34 +108,30 @@
                 $('#infoAccount').html('<h1> Info account </h1>')
                 $('#loader').css('display','none')
             })
-
             socket.on('receiveQr',(data) => {
                 $('#loader').css('display','none')
                 if(data.status){
                     alert(data.status)
                 }else{
-                    $('#shot').attr("src",'http://167.99.15.106:3000/file?id='+data.file);
+                    $('#shot').attr("src",'http://127.0.0.1:3000/file?id='+data.file);
                     $('#loader').css('display','none')
                     $('#shot').css('display','block')
                 }
             })
-
             socket.on('receiveScreen',(data) => {
                 $('#loader').css('display','none')
                 if(data.status){
                     alert(data.status)
                 }else{
-                    $('#shot').attr("src",'http://167.99.15.106:3000/file?id='+data.file);
+                    $('#shot').attr("src",'http://127.0.0.1:3000/file?id='+data.file);
                     $('#loader').css('display','none')
                     $('#shot').css('display','block')
                 }
             })
-
             
             socket.on('disconnect',(data) => {
                 console.log('Conneccion terminada',data)
             })
-
             socket.on('reconnect',() => {
                 console.log('Conneccion reconnect')
             })
