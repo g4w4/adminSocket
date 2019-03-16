@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <title> Root page </title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+    <script src="https://socket-io-chat.now.sh/socket.io/socket.io.js" ></script>
+</head>
+<body>
+    <div id="loader" style="
+    display: none;
+    position: absolute;
+    z-index: 10000;
+    width: 100%;
+    color: #070707b3;
+    height: 1000px;
+    background-color: #a3a3a373;">
+        <h1 style="
+            position: absolute;
+            left: 40%;
+            top: 20%;">
+            Cargando
+        </h1>
+    </div>
+    <h1>Portal Root <span class="badge" id="status_connection"></span> </h1>
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12" id="alerts"></div>
+        </div>
+    </div>
+
+
+    <div class="container">
+        <div class="row">
+            <h1>Accounts Connected</h1>
+            <table class="table">
+                <thead>
+                  <tr id="head">
+                    <th scope="col">Name</th>
+                    <th scope="col">Number</th>
+                    <th scope="col">Status</th>
+                    <th scope="col">Licences</th>
+                    <th scope="col">Users join</th>
+                    <th scope="col">WhatsAppJoin</th>
+                    <th scope="col">Status Internet</th>
+                    <th scope="col"> Reboot System</th>
+                  </tr>
+                </thead>
+                <tbody id="bodyAccounts">
+                 
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Modal for restarting account -->
+            <div class="modal fade" id="reboot_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-backdrop="static">
+                <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header">
+                    <h5 class="modal-title" id="exampleModalLabel">Restarting account</h5>
+                    </div>
+                    <div class="modal-body">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                    <small>This process can take a few minutes *** </small>
+                    </div>
+                </div>
+                </div>
+            </div>
+        <!-- / -->
+
+        <!-- Modal of getQr -->
+        <div class="modal fade" id="qr_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-backdrop="static">
+                <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <div class="modal-header" id="header_img">
+                        <h5 class="modal-title" id="exampleModalLabel">Waiting Qr ...</h5>
+                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeImg()" id="close-qr">
+                            <span aria-hidden="true">&times;</span>
+                          </button>
+                    </div>
+                    <div class="modal-body" id="img_qr">
+                        <div class="progress">
+                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                    <small>This process can take a few minutes *** </small>
+                    </div>
+                </div>
+                </div>
+            </div>
+        <!-- / -->
+
+    </div>
+    
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM" crossorigin="anonymous"></script>
+    <script>
+
+        let socket  = null;
+        let accounts = null;
+        const token = 'swccTTKXakAMWxLRxnA6z1q7'
+        const ip = '127.0.0.1'
+
+        const addAccounts = (account) => {
+            (account.accountDown) ? alertDown(account) : deleteAlert(account)
+            return `
+                <tr>
+                    <th scope="row">${account.nombre}</th>
+                    <th scope="row">${account.numero}</th>
+                    <th scope="row">${account.status}</th>
+                    <th scope="row">${account.licencias}</th>
+                    <th scope="row">${account.usersLogin.length}</th>
+                    <th scope="row">${(account.whatsAppJoin) ? button('success','Online') : button('warning','login','getQr',account.socketId)}</th>
+                    <th scope="row">${(account.accountDown) ? '<span class="badge badge-danger">Offline</span>' : '<span class="badge badge-success">Online</span>'}</th>
+                    <th scope="row">${(account.accountDown) ? `<button class="btn btn-danger" onclick="reboot('${account.bw_name}','${account.py_name}')">Very Important</button>` : `<span onclick="reboot('${account.bw_name}','${account.py_name}')" class="badge badge-success">Not necessary</span>`}</th>
+                  </tr>
+            `;
+        }
+
+        const button = (type,message,fnName,params) => {
+            return `<button type="button" onclick="${fnName}('${params}')" class="btn btn-${type}">${message}</button>`
+        }
+
+        /* give code Qr of account */
+        const getQr = (socketId) => {
+            $('#img_qr').html(`
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+                </div>`)
+            $('#qr_modal').modal('show')
+            $('#close-qr').css('display','none')
+            setTimeout( () => socket.emit('giveQr',socketId) , 1000)
+        }
+
+        /* Set to alert in the page */
+        const alertDown = (account) => {
+            if(!document.getElementById(account.token)){
+                $('#alerts').append(`
+                    <div class="alert alert-danger alert-dismissible fade show" role="alert" id="${account.token}">
+                        <strong>Account down ${account.nombre}</strong> <p>This very important restart the service.
+                        Number afected "${account.numero}"</p>
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                            <span aria-hidden="true">&times;</span>
+                        </button>
+                    </div>
+                `)
+            }
+        }
+
+        /* Delete alert after the account is up */
+        const deleteAlert = (account) => {
+            $(`#${account.token}`).remove()
+        }
+        
+        /* Restart changes in accounts */
+        const changesInAccounts = (accounts) => {
+            let html = '';
+            for (const key in accounts) {
+                if (accounts.hasOwnProperty(key)) {
+                    const account = accounts[key];
+                    html+=addAccounts(account)
+                }
+            }
+
+            $('#bodyAccounts').html(html)
+        }
+
+        /* Restart services of account */
+        const reboot = (bw_name,py_name) => {
+            if(confirm('Are you sure of reboot account ?')){
+                socket.emit('restartInit',{bw_name,py_name})
+                $('#reboot_modal').modal('show')
+            }
+        }
+
+        /* Evit the refresh page */
+        window.onbeforeunload = function(e) {
+            return 'Please do not restart page';
+        };
+
+        /* Close img modal */
+        const closeImg = () => {
+            $('#qr_modal').modal('hide')
+        }
+
+        /* Status connection */
+        const offline = () => {
+            $('#status_connection').removeClass('badge-success').addClass('badge-danger').text('offline')
+        }
+
+        const online = () => {
+            $('#status_connection').removeClass('badge-danger').addClass('badge-success').text('online')
+        }
+
+        $( document ).ready( () => {
+    
+            offline()
+
+            socket = io('http://'+ip+':3000/?token='+token);
+    
+            socket.on('connect',() => {
+                
+                online()
+    
+                socket.on('disconnect',(data) => offline() )
+    
+                socket.on('reconnect',() => online() )
+    
+            });
+
+
+            /* Receive changes in accounts */
+            socket.on('changeInAccounts',(_accounts) => {
+                accounts = _accounts
+                changesInAccounts(accounts)
+                console.table(accounts)
+            })
+
+            /* Receive all accounts join in the moment of login */
+            socket.on('getAllAccounts',(_accounts) => {
+                accounts = _accounts
+                changesInAccounts(accounts)
+                console.table(accounts)
+            })
+
+            /* Receive alert when one account is down */
+            socket.on('accountDown',(account) => {
+                alert('Acount down' + account.nombre)
+                alertDown(account)
+            })
+
+            /* Receive the notification of restart a one services */
+            socket.on('restartSuccess', () => {
+                $('#reboot_modal').modal('hide')
+            })
+
+            socket.on('restartFailed', (err) => {
+                alert('Reboot failed, contact to administrator Error :'+err)
+            })
+
+            /* Receive codeQr */
+            socket.on('receiveQr',(file) => {
+                if(file.error){
+                    alert('Error '+file.error)
+                    $('#qr_modal').modal('hide')
+                }else{
+                    $('#img_qr').html(`<img src="http://${ip}:3000/file?id=${file.file}" style="width: 100%;" id="shot">`)
+                    $('#close-qr').css('display','block')
+                }
+            })
+
+            /* Receive confirmation of login */
+            socket.on('receiverLogin', () => closeImg())
+        })
+    </script>
+</body>
+</html>
+
+
