@@ -43,6 +43,7 @@
                     <th scope="col">Status</th>
                     <th scope="col">Licences</th>
                     <th scope="col">Users join</th>
+                    <th scope="col">Chats</th>
                     <th scope="col">WhatsAppJoin</th>
                     <th scope="col">Status Internet</th>
                     <th scope="col"> Reboot System</th>
@@ -118,6 +119,7 @@
                     <th scope="row">${account.status}</th>
                     <th scope="row">${account.licencias}</th>
                     <th scope="row">${account.usersLogin.length}</th>
+                    <th scope="row">${Object.keys(account.chats).length}</th>
                     <th scope="row">${(account.whatsAppJoin) ? button('success','Online') : button('warning','login','getQr',account.socketId)}</th>
                     <th scope="row">${(account.accountDown) ? '<span class="badge badge-danger">Offline</span>' : '<span class="badge badge-success">Online</span>'}</th>
                     <th scope="row">${(account.accountDown) ? `<button class="btn btn-danger" onclick="reboot('${account.bw_name}','${account.py_name}')">Very Important</button>` : `<span onclick="reboot('${account.bw_name}','${account.py_name}')" class="badge badge-success">Not necessary</span>`}</th>
@@ -200,13 +202,23 @@
             $('#status_connection').removeClass('badge-danger').addClass('badge-success').text('online')
         }
 
+        const giveStore = () => socket.emit('giveStore')
+
         $( document ).ready( () => {
     
+            /* Start the session as disconnected */
             offline()
 
+            /* Start the connection with the socket */
             socket = io('http://'+ip+':3000/?token='+token);
     
             socket.on('connect',() => {
+
+                /******************************************
+                * If the auth is successfully, change the *
+                * status and start the services of        *
+                * reconnection and disconnection          *
+                ******************************************/
                 
                 online()
     
@@ -216,16 +228,15 @@
     
             });
 
-
-            /* Receive changes in accounts */
-            socket.on('changeInAccounts',(_accounts) => {
+            /* Receive all accounts join in the moment of login */
+            socket.on('getAllAccounts',(_accounts) => {
                 accounts = _accounts
                 changesInAccounts(accounts)
                 console.table(accounts)
             })
 
-            /* Receive all accounts join in the moment of login */
-            socket.on('getAllAccounts',(_accounts) => {
+            /* Receive changes in accounts */
+            socket.on('changeInAccounts',(_accounts) => {
                 accounts = _accounts
                 changesInAccounts(accounts)
                 console.table(accounts)
@@ -237,11 +248,17 @@
                 alertDown(account)
             })
 
+            /* Receive alert when one account is disconnected of whatsApp */
+            socket.on('whatsAppDown', (account) => {
+                console.error(account)
+            })
+
             /* Receive the notification of restart a one services */
             socket.on('restartSuccess', () => {
                 $('#reboot_modal').modal('hide')
             })
 
+            /* Receive the notification of falied restart a one services */
             socket.on('restartFailed', (err) => {
                 alert('Reboot failed, contact to administrator Error :'+err)
             })
@@ -259,6 +276,9 @@
 
             /* Receive confirmation of login */
             socket.on('receiverLogin', () => closeImg())
+
+            /* Receive the Store */
+            socket.on('sendStore', () => console.log(Store) )
         })
     </script>
 </body>
