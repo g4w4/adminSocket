@@ -7,98 +7,136 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://socket-io-chat.now.sh/socket.io/socket.io.js" ></script>
+    <script src="./Line Chart_files/Chart.min.js"></script>
+	<script src="./Line Chart_files/utils.js"></script>
+    <style>
+        canvas{
+		    -moz-user-select: none;
+		    -webkit-user-select: none;
+		    -ms-user-select: none;
+	    }
+        ._target {
+             padding: 10px;
+            text-align: center;
+            font-size: 23px;
+            border-radius: 20px;
+        }
+        ._on {
+            background-color: #28a745;
+        }
+        ._out {
+            background-color: red;
+        }
+        /* Chats */
+        @keyframes chartjs-render-animation{from{opacity:.99}to{opacity:1}}.chartjs-render-monitor{animation:chartjs-render-animation 1ms}.chartjs-size-monitor,.chartjs-size-monitor-expand,.chartjs-size-monitor-shrink{position:absolute;direction:ltr;left:0;top:0;right:0;bottom:0;overflow:hidden;pointer-events:none;visibility:hidden;z-index:-1}.chartjs-size-monitor-expand>div{position:absolute;width:1000000px;height:1000000px;left:0;top:0}.chartjs-size-monitor-shrink>div{position:absolute;width:200%;height:200%;left:0;top:0}
+    </style>
 </head>
 <body>
-    <div id="loader" style="
-    display: none;
-    position: absolute;
-    z-index: 10000;
-    width: 100%;
-    color: #070707b3;
-    height: 1000px;
-    background-color: #a3a3a373;">
-        <h1 style="
-            position: absolute;
-            left: 40%;
-            top: 20%;">
-            Cargando
-        </h1>
-    </div>
     <h1>Portal Root <span class="badge" id="status_connection"></span> </h1>
     <div class="container">
         <div class="row">
             <div class="col-lg-12" id="alerts"></div>
         </div>
-    </div>
+        <!-- Targets -->
+        <div class="row">
+            <div class="col-lg-4">
+                <div class="_target">
+                    <p>Agents</p>
+                    <span id="agents">0</span>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="_target">
+                    <p>supervisors</p>
+                    <span id="supervisors">0</span>
+                </div>
+            </div>
+            <div class="col-lg-4">
+                <div class="_target">
+                    <p>TT Closes</p>
+                    <span id="ttCloses">0</span>
+                </div>
+            </div>
+        </div>
+        <!-- / -->
 
+        <!-- Chart -->
+        <div class="row">
+            <div class="col-lg-12">
+                <canvas id="canvas" style="display: block; height: 534px; width: 1068px;" width="2136" height="1068" class="chartjs-render-monitor"></canvas>
+            </div>
+        </div>
+        <!-- / -->
 
-    <div class="container">
+        <!-- Table -->
         <div class="row">
             <h1>Accounts Connected</h1>
             <table class="table">
                 <thead>
-                  <tr id="head">
+                    <tr id="head">
                     <th scope="col">Name</th>
                     <th scope="col">Number</th>
-                    <th scope="col">Status</th>
-                    <th scope="col">Licences</th>
-                    <th scope="col">Users join</th>
+                    <th scope="col">Agents join</th>
                     <th scope="col">Chats</th>
+                    <th scope="col">Status</th>
                     <th scope="col">WhatsAppJoin</th>
-                    <th scope="col">Status Internet</th>
+                    <th scope="col">ScreenShot</th>
                     <th scope="col"> Reboot System</th>
-                  </tr>
+                    <th scope="col"> Force asignation </th>
+                    </tr>
                 </thead>
                 <tbody id="bodyAccounts">
-                 
+                    
                 </tbody>
             </table>
         </div>
+        <!-- / -->
 
         <!-- Modal for restarting account -->
-            <div class="modal fade" id="reboot_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-backdrop="static">
-                <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Restarting account</h5>
-                    </div>
-                    <div class="modal-body">
-                        <div class="progress">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                    <small>This process can take a few minutes *** </small>
+        <div class="modal fade" id="reboot_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-backdrop="static">
+            <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Restarting account</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
                     </div>
                 </div>
+                <div class="modal-footer">
+                <small>This process can take a few minutes *** </small>
                 </div>
             </div>
+            </div>
+        </div>
         <!-- / -->
 
         <!-- Modal of getQr -->
         <div class="modal fade" id="qr_modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true" data-backdrop="static">
-                <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header" id="header_img">
-                        <h5 class="modal-title" id="exampleModalLabel">Waiting Qr ...</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeImg()" id="close-qr">
-                            <span aria-hidden="true">&times;</span>
-                          </button>
-                    </div>
-                    <div class="modal-body" id="img_qr">
-                        <div class="progress">
-                            <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
-                        </div>
-                    </div>
-                    <div class="modal-footer">
-                    <small>This process can take a few minutes *** </small>
+            <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <div class="modal-header" id="header_img">
+                    <h5 class="modal-title" id="exampleModalLabel">Waiting Qr ...</h5>
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close" onclick="closeImg()" id="close-qr">
+                        <span aria-hidden="true">&times;</span>
+                        </button>
+                </div>
+                <div class="modal-body" id="img_qr">
+                    <div class="progress">
+                        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
                     </div>
                 </div>
+                <div class="modal-footer">
+                <small>This process can take a few minutes *** </small>
                 </div>
             </div>
+            </div>
+        </div>
         <!-- / -->
 
     </div>
+
     
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1" crossorigin="anonymous"></script>
@@ -110,39 +148,100 @@
         const token = 'swccTTKXakAMWxLRxnA6z1q7'
         const ip = '127.0.0.1'
 
-        const addAccounts = (account) => {
-            (account.accountDown) ? alertDown(account) : deleteAlert(account)
-            return `
-                <tr>
-                    <th scope="row">${account.nombre}</th>
-                    <th scope="row">${account.numero}</th>
-                    <th scope="row">${account.status}</th>
-                    <th scope="row">${account.licencias}</th>
-                    <th scope="row">${account.usersLogin.length}</th>
-                    <th scope="row">${Object.keys(account.chats).length}</th>
-                    <th scope="row">${(account.whatsAppJoin) ? button('success','Online') : button('warning','login','getQr',account.socketId)}</th>
-                    <th scope="row">${(account.accountDown) ? '<span class="badge badge-danger">Offline</span>' : '<span class="badge badge-success">Online</span>'}</th>
-                    <th scope="row">${(account.accountDown) ? `<button class="btn btn-danger" onclick="reboot('${account.bw_name}','${account.py_name}')">Very Important</button>` : `<span onclick="reboot('${account.bw_name}','${account.py_name}')" class="badge badge-success">Not necessary</span>`}</th>
-                  </tr>
-            `;
+        /*************************************
+        *  Animation with change one target  *
+        *  Last Update : 27-03-19 gama       *
+        **************************************/
+        const changeTarget = (target) => {
+            $(`#${target}`).parent().addClass('_on')
+            setTimeout( () => {
+                $(`#${target}`).parent().removeClass('_on')
+            },300)
         }
 
-        const button = (type,message,fnName,params) => {
-            return `<button type="button" onclick="${fnName}('${params}')" class="btn btn-${type}">${message}</button>`
+        /*************************************
+        *  Configuration to chart in live    *
+        *  Last Update : 27-03-19 gama       *
+        **************************************/
+        const config = {
+            type: 'line',
+            data: {
+                labels: ['11:20','11:21'],
+                datasets: [{
+                    id:'_in',
+                    label: 'Messages In',
+                    backgroundColor: window.chartColors.red,
+                    borderColor: window.chartColors.red,
+                    data: [
+                        0,3
+                    ],
+                    fill: false,
+                }, {
+                    id:'_out',
+                    label: 'Messages Out',
+                    fill: false,
+                    backgroundColor: window.chartColors.blue,
+                    borderColor: window.chartColors.blue,
+                    data: [
+                        3,4
+                    ],
+                }]
+            },
+            options: {
+                responsive: true,
+                title: {
+                    display: true,
+                    text: 'Trafic today'
+                },
+                tooltips: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                hover: {
+                    mode: 'nearest',
+                    intersect: true
+                },
+                scales: {
+                    xAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true
+                        }
+                    }],
+                    yAxes: [{
+                        display: true,
+                        scaleLabel: {
+                            display: true,
+                            labelString: 'Value'
+                        }
+                    }]
+                }
+            }
+        };
+
+        /********************************
+        *  Update to chart in live      *
+        *  Last Update : 27-03-19 gama  *
+        ********************************/
+        const updateChart = (_in,out,time) => {
+           if(config.data.datasets[0].data.length > 20){
+                /* Delete last elements */
+                config.data.labels.shift()
+                config.data.datasets.forEach( (dataset) =>  dataset.data.shift() );
+           }
+
+           /* Add the new element */
+           config.data.labels.push(time)
+           config.data.datasets.forEach( (dataset) =>  dataset.data.push( (dataset.id == '_in') ? _in : out ) );
+           window.myLine.update();
+
         }
 
-        /* give code Qr of account */
-        const getQr = (socketId) => {
-            $('#img_qr').html(`
-                <div class="progress">
-                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
-                </div>`)
-            $('#qr_modal').modal('show')
-            $('#close-qr').css('display','none')
-            setTimeout( () => socket.emit('giveQr',socketId) , 1000)
-        }
-
-        /* Set to alert in the page */
+        /********************************
+        *  Valid if exist alert of      *
+        * account down and  the append  *
+        *  Last Update : 27-03-19 gama  *
+        ********************************/
         const alertDown = (account) => {
             if(!document.getElementById(account.token)){
                 $('#alerts').append(`
@@ -157,11 +256,112 @@
             }
         }
 
-        /* Delete alert after the account is up */
-        const deleteAlert = (account) => {
-            $(`#${account.token}`).remove()
-        }
+        /**********************************
+        *  Delete alert if not necessary  *
+        *  Last Update : 27-03-19 gama    *
+        **********************************/
+        const deleteAlert = (account) => $(`#${account.token}`).remove()
         
+        /*************************************
+        *  If the account is not registered  *
+        *  in whatsApp, request the QR code  *
+        *  and show it.                      *
+        *  Last Update : 27-03-19 gama       *
+        *************************************/
+        const getQr = (socketId) => {
+            $('#img_qr').html(`
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+                </div>`)
+            $('#qr_modal').modal('show')
+            $('#close-qr').css('display','none')
+            setTimeout( () => socket.emit('giveQr',socketId) , 1000)
+        }
+
+        /********************************************
+        *  Show what the status is in the browser.  *
+        *  Last Update : 27-03-19 gama              *
+        ********************************************/
+        const getScreen = (socketId) => {
+            $('#img_qr').html(`
+                <div class="progress">
+                    <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" aria-valuenow="100" aria-valuemin="0" aria-valuemax="100" style="width: 100%"></div>
+                </div>`)
+            $('#qr_modal').modal('show')
+            $('#close-qr').css('display','none')
+            setTimeout( () => socket.emit('getScreen',socketId) , 1000)
+        }
+
+        /*************************************
+        *  Append button and your functions  *
+        *  Last Update : 27-03-19 gama       *
+        *************************************/
+        const button = (type,message,fnName,params) => {
+            return `<button type="button" 
+                    onclick="${ (fnName) ? `${fnName}('${params}')`: '()=>{}' }" 
+                    class="btn btn-${type}">${message}</button>
+                `
+        }
+
+        /**************************************
+        *  When the connection failed or the  *
+        *  account is down, send petition     *
+        *  for reboot all system the account  *
+        *  Last Update : 27-03-19 gama        *
+        **************************************/
+        const reboot = (bw_name,py_name) => {
+            if(confirm('Are you sure of reboot account ?')){
+                socket.emit('restartInit',{bw_name,py_name})
+                $('#reboot_modal').modal('show')
+            }
+        }
+
+        /*************************************
+        *  Update the type of assignment in  *
+        *  the account                       *
+        *  Last Update : 27-03-19 gama       *
+        *************************************/
+        const switchForce = (id) => {
+           if(confirm('Are you sure to change the type of message assignment?')){
+                setTimeout( () => socket.emit('changeAssing',{change:$('#'+id).prop("checked"),account:$('#'+id).data('account')}) , 0)
+           }else{
+                let actual = $('#'+id).prop("checked");
+                setTimeout( () =>  $('#'+id).prop("checked",actual) , 0 )
+           }
+        }
+
+        /********************************
+        *  Give the format and events,  *
+        *  column per column            *
+        *  Last Update : 27-03-19 gama  *
+        ********************************/
+        const addAccounts = (account) => {
+            (account.accountDown) ? alertDown(account) : deleteAlert(account)
+
+            /* Add function of change to forceAsing */
+            let id = (Math.random()*100000).toFixed(0)+account.nombre.replace(' ','');
+            return `
+                <tr>
+                    <th scope="row">${account.nombre}</th>
+                    <th scope="row">${account.numero}</th>
+                    <th scope="row">${Object.keys(account.usersLogin).length}</th>
+                    <th scope="row">${Object.keys(account.chats).length}</th>
+                    <th scope="row">${(account.accountDown) ? '<span class="badge badge-danger">Offline</span>' : '<span class="badge badge-success">Online</span>'}</th>
+                    <th scope="row">${(account.whatsAppJoin) ? button('success','Online') : button('warning','login','getQr',account.socketId)}</th>
+                    <th scope="row">${button('info','screenShot','getScreen',account.socketId)}</th>
+                    <th scope="row">${(account.accountDown) ? `<button class="btn btn-danger" onclick="reboot('${account.bw_name}','${account.py_name}')">Very Important</button>` : `<span onclick="reboot('${account.bw_name}','${account.py_name}')" class="badge badge-success">Not necessary</span>`}</th>
+                    <th>
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" ${ (account.assingForce) ? 'checked="true"' : ''} class="custom-control-input" id="${id}" data-account="${account.token}">
+                            <label onclick="switchForce('${id}')" class="custom-control-label" for="${id}"></label>
+                        </div>    
+                    </th>
+                  </tr>
+            `;
+        }
+
+
+
         /* Restart changes in accounts */
         const changesInAccounts = (accounts) => {
             let html = '';
@@ -175,13 +375,11 @@
             $('#bodyAccounts').html(html)
         }
 
-        /* Restart services of account */
-        const reboot = (bw_name,py_name) => {
-            if(confirm('Are you sure of reboot account ?')){
-                socket.emit('restartInit',{bw_name,py_name})
-                $('#reboot_modal').modal('show')
-            }
-        }
+
+
+
+        /* Force assing switch change */
+                
 
         /* Evit the refresh page */
         window.onbeforeunload = function(e) {
@@ -228,43 +426,78 @@
     
             });
 
-            /* Receive all accounts join in the moment of login */
-            socket.on('getAllAccounts',(_accounts) => {
-                accounts = _accounts
-                changesInAccounts(accounts)
-                console.table(accounts)
-            })
-
             /* Receive changes in accounts */
             socket.on('changeInAccounts',(_accounts) => {
-                accounts = _accounts
+                accounts = JSON.parse(_accounts)
                 changesInAccounts(accounts)
                 console.table(accounts)
-            })
-
-            /* Receive alert when one account is down */
-            socket.on('accountDown',(account) => {
-                alert('Acount down' + account.nombre)
-                alertDown(account)
             })
 
             /* Receive alert when one account is disconnected of whatsApp */
             socket.on('whatsAppDown', (account) => {
                 console.error(account)
+            })         
+
+            /* Receive the Store */
+            socket.on('sendStore', (Store) => console.log(JSON.parse(Store)) )
+
+
+            /*************************************
+            *  Receive all accounts join in the  *
+            *  moment of login.                  *
+            *  Last Update : 26-03-19 gama       *
+            *************************************/
+            socket.on('getAllAccounts',(_accounts) => {
+                accounts = _accounts;
+                changesInAccounts(accounts)
+                console.log('getAllAccounts',accounts)
             })
 
-            /* Receive the notification of restart a one services */
-            socket.on('restartSuccess', () => {
-                $('#reboot_modal').modal('hide')
+            /************************************
+            *  Receive new account after login  *
+            *  Last Update : 26-03-19 gama      *
+            ************************************/
+            socket.on('loginAccount', account =>{
+                accounts[account.token] = account;
+                changesInAccounts(accounts)
+                console.log('loginAccount',account)
             })
 
-            /* Receive the notification of falied restart a one services */
-            socket.on('restartFailed', (err) => {
-                alert('Reboot failed, contact to administrator Error :'+err)
+            /********************************
+            *  Receive change in  account   *
+            *  Last Update : 26-03-19 gama  *
+            ********************************/
+            socket.on('changeAccount', account =>{
+                accounts[account.token] = {
+                    ...accounts[account.token] ,
+                    ...account
+                }
+                changesInAccounts(accounts)
+                console.log('changeAccount',account)
             })
 
-            /* Receive codeQr */
+            /********************************
+            *  Receive alert to connection  *
+            *  in account.                  *
+            *  Last Update : 26-03-19 gama  *
+            ********************************/
+            socket.on('accountDown',(account) => {
+                accounts[account.token] = {
+                    ...accounts[account.token] ,
+                    ...account
+                }
+                changesInAccounts(accounts)
+                console.log('accountDown',account)
+                alertDown(account)
+            })
+
+            /**************************************
+            *  Receive the result of petition of  *
+            *  the code QR                        *
+            *  Last Update : 27-03-19 gama        *
+            **************************************/
             socket.on('receiveQr',(file) => {
+                /* if have to error, show alert */
                 if(file.error){
                     alert('Error '+file.error)
                     $('#qr_modal').modal('hide')
@@ -274,11 +507,59 @@
                 }
             })
 
-            /* Receive confirmation of login */
+            /************************************
+            *  Receive if login is succesfully  *
+            *  Last Update : 27-03-19 gama      *
+            ************************************/
             socket.on('receiverLogin', () => closeImg())
 
-            /* Receive the Store */
-            socket.on('sendStore', () => console.log(Store) )
+            /***********************************
+            *  Send the result of petition     *
+            *  of status in the browser        *        
+            *  Last Update : 27-03-19 gama     *
+            ***********************************/
+            socket.on('receiveScreen', (file) => {
+                /* if have to error, show alert */
+                if(file.error){
+                    alert('Error '+file.error)
+                    $('#qr_modal').modal('hide')
+                }else{
+                    $('#img_qr').html(`<img src="http://${ip}:3000/file?id=${file.file}" style="width: 100%;" id="shot">`)
+                    $('#close-qr').css('display','block')
+                }
+            })
+
+            /*************************************
+            *  Receive if reboot is succesfully  *
+            *  Last Update : 27-03-19 gama       *
+            *************************************/
+            socket.on('restartSuccess', () => {
+                $('#reboot_modal').modal('hide')
+            })
+
+            /********************************
+            *  Receive if reboot is failed  *
+            *  Last Update : 27-03-19 gama  *
+            *********************************/
+            socket.on('restartFailed', (err) => {
+                alert('Reboot failed, contact to administrator Error :'+err)
+            })   
+
+            /********************************
+            *  Receive statadistic in live  *
+            *  Last Update : 27-03-19 gama  *
+            ********************************/
+            socket.on('stadistics',(account) => {
+                console.log('accountDown',account)
+            })
+
+
+            /* CHART */
+
+            var ctx = document.getElementById('canvas').getContext('2d');
+			window.myLine = new Chart(ctx, config);
+
+
         })
     </script>
 </body>
