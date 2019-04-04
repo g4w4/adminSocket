@@ -8,7 +8,8 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://socket-io-chat.now.sh/socket.io/socket.io.js" ></script>
     <script src="./Line Chart_files/Chart.min.js"></script>
-	<script src="./Line Chart_files/utils.js"></script>
+    <script src="./Line Chart_files/utils.js"></script>
+    <script src="https://momentjs.com/downloads/moment-with-locales.min.js"></script>
     <style>
         canvas{
 		    -moz-user-select: none;
@@ -47,8 +48,8 @@
             </div>
             <div class="col-lg-4">
                 <div class="_target">
-                    <p>supervisors</p>
-                    <span id="supervisors">0</span>
+                    <p>TT Open</p>
+                    <span id="ttOpen">0</span>
                 </div>
             </div>
             <div class="col-lg-4">
@@ -145,8 +146,8 @@
 
         let socket  = null;
         let accounts = null;
-        const token = 'swccTTKXakAMWxLRxnA6z1q7'
-        const ip = '127.0.0.1'
+        const token = 'FI3QgxGoQNCDrKmr45E0H8G0'
+        const ip = '45.56.74.115'
 
         /*************************************
         *  Animation with change one target  *
@@ -166,24 +167,24 @@
         const config = {
             type: 'line',
             data: {
-                labels: ['11:20','11:21'],
+                labels: [moment().format('HH:MM:SS')],
                 datasets: [{
                     id:'_in',
-                    label: 'Messages In',
+                    label: 'TT Open',
                     backgroundColor: window.chartColors.red,
                     borderColor: window.chartColors.red,
                     data: [
-                        0,3
+                        0
                     ],
                     fill: false,
                 }, {
                     id:'_out',
-                    label: 'Messages Out',
+                    label: 'TT Close',
                     fill: false,
                     backgroundColor: window.chartColors.blue,
                     borderColor: window.chartColors.blue,
                     data: [
-                        3,4
+                        0
                     ],
                 }]
             },
@@ -234,7 +235,6 @@
            config.data.labels.push(time)
            config.data.datasets.forEach( (dataset) =>  dataset.data.push( (dataset.id == '_in') ? _in : out ) );
            window.myLine.update();
-
         }
 
         /********************************
@@ -360,9 +360,33 @@
             `;
         }
 
+        /********************************
+        *  Update targets aftert update *
+        *  Last Update : 03-04-19 gama  *
+        ********************************/
+        const updateTargets = (accounts) => {
+            let agents = 0;
+            let ttOpen = 0;
 
+            for(account in accounts){
+                let _agents = Object.keys( accounts[account].usersLogin ).length
+                let ttopen = Object.keys( accounts[account].chats ).length
+                console.log(ttopen, ttOpen)
+                agents+=_agents;
+                ttOpen+=ttopen;
+                console.log(ttopen, ttOpen)
+            }
 
-        /* Restart changes in accounts */
+            $('#ttOpen').text( ttOpen )
+            $('#agents').text(agents)
+
+            updateChart(ttOpen,$('#ttCloses').text(),moment().format('HH:MM:SS'))
+        }
+
+        /********************************
+        *  Restart changes in accounts *
+        *  Last Update : 03-04-19 gama  *
+        ********************************/
         const changesInAccounts = (accounts) => {
             let html = '';
             for (const key in accounts) {
@@ -374,12 +398,6 @@
 
             $('#bodyAccounts').html(html)
         }
-
-
-
-
-        /* Force assing switch change */
-                
 
         /* Evit the refresh page */
         window.onbeforeunload = function(e) {
@@ -426,22 +444,6 @@
     
             });
 
-            /* Receive changes in accounts */
-            socket.on('changeInAccounts',(_accounts) => {
-                accounts = JSON.parse(_accounts)
-                changesInAccounts(accounts)
-                console.table(accounts)
-            })
-
-            /* Receive alert when one account is disconnected of whatsApp */
-            socket.on('whatsAppDown', (account) => {
-                console.error(account)
-            })         
-
-            /* Receive the Store */
-            socket.on('sendStore', (Store) => console.log(JSON.parse(Store)) )
-
-
             /*************************************
             *  Receive all accounts join in the  *
             *  moment of login.                  *
@@ -450,7 +452,7 @@
             socket.on('getAllAccounts',(_accounts) => {
                 accounts = _accounts;
                 changesInAccounts(accounts)
-                console.log('getAllAccounts',accounts)
+                updateTargets(accounts)
             })
 
             /************************************
@@ -473,6 +475,7 @@
                     ...account
                 }
                 changesInAccounts(accounts)
+                updateTargets(accounts)
                 console.log('changeAccount',account)
             })
 
@@ -546,15 +549,21 @@
             })   
 
             /********************************
-            *  Receive statadistic in live  *
-            *  Last Update : 27-03-19 gama  *
+            *  Receive TT closed in live    *
+            *  Last Update : 03-04-19 gama  *
             ********************************/
-            socket.on('stadistics',(account) => {
-                console.log('accountDown',account)
+            socket.on('updateTT',(total) => {
+                $('#ttCloses').text(total)
+                updateChart( $('#ttOpen').text(),$('#ttCloses').text(),moment().format('HH:MM:SS'))
             })
 
 
-            /* CHART */
+
+
+            /********************************
+            *  Create chart                 *
+            *  Last Update : 03-04-19 gama  *
+            ********************************/
 
             var ctx = document.getElementById('canvas').getContext('2d');
 			window.myLine = new Chart(ctx, config);
