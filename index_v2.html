@@ -147,7 +147,9 @@
         let socket  = null;
         let accounts = null;
         const token = 'FI3QgxGoQNCDrKmr45E0H8G0'
-        const ip = '45.56.74.115'
+
+        
+        const ip = confirm("PROD ?") ? '45.56.74.115' : '45.79.18.65'
 
         /*************************************
         *  Animation with change one target  *
@@ -556,8 +558,6 @@
                 $('#ttCloses').text(total)
                 updateChart( $('#ttOpen').text(),$('#ttCloses').text(),moment().format('HH:MM:SS'))
             })
-
-
 
 
             /********************************
