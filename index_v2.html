@@ -291,7 +291,7 @@
                 </div>`)
             $('#qr_modal').modal('show')
             $('#close-qr').css('display','none')
-            setTimeout( () => socket.emit('getScreen',socketId) , 1000)
+             socket.emit('getScreen',socketId)
         }
 
         /*************************************
@@ -376,12 +376,15 @@
             let ttOpen = 0;
 
             for(account in accounts){
-                let _agents = Object.keys( accounts[account].usersLogin ).length
-                let ttopen = Object.keys( accounts[account].chats ).length
-                console.log(ttopen, ttOpen)
-                agents+=_agents;
-                ttOpen+=ttopen;
-                console.log(ttopen, ttOpen)
+                if( accounts[account] ){
+                    let _agents = Object.keys( accounts[account].usersLogin ).length
+                    let ttopen = Object.keys( accounts[account].chats ).length
+                    console.log(ttopen, ttOpen)
+                    agents+=_agents;
+                    ttOpen+=ttopen;
+                    console.log(ttopen, ttOpen)
+                }
+                
             }
 
             $('#ttOpen').text( ttOpen )
