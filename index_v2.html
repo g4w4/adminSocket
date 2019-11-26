@@ -146,10 +146,10 @@
 
         let socket  = null;
         let accounts = null;
-        const token = 'FI3QgxGoQNCDrKmr45E0H8G0'
+        const token = confirm("PROD ?")  ? 'FI3QgxGoQNCDrKmr45E0H8G01' : 'tokenFull'
 
         
-        const ip = confirm("PROD ?") ? '45.56.74.115' : '45.79.18.65'
+        const ip = confirm("PROD ?") ? 'https://ws-voices.com.mx' : 'http://127.0.0.1'
 
         /*************************************
         *  Animation with change one target  *
@@ -338,28 +338,33 @@
         *  Last Update : 27-03-19 gama  *
         ********************************/
         const addAccounts = (account) => {
-            (account.accountDown) ? alertDown(account) : deleteAlert(account)
+            if(account){
+                (account.accountDown) ? alertDown(account) : deleteAlert(account)
 
-            /* Add function of change to forceAsing */
-            let id = (Math.random()*100000).toFixed(0)+account.nombre.replace(' ','');
-            return `
-                <tr>
-                    <th scope="row">${account.nombre}</th>
-                    <th scope="row">${account.numero}</th>
-                    <th scope="row">${Object.keys(account.usersLogin).length}</th>
-                    <th scope="row">${Object.keys(account.chats).length}</th>
-                    <th scope="row">${(account.accountDown) ? '<span class="badge badge-danger">Offline</span>' : '<span class="badge badge-success">Online</span>'}</th>
-                    <th scope="row">${(account.whatsAppJoin) ? button('success','Online') : button('warning','login','getQr',account.socketId)}</th>
-                    <th scope="row">${button('info','screenShot','getScreen',account.socketId)}</th>
-                    <th scope="row">${(account.accountDown) ? `<button class="btn btn-danger" onclick="reboot('${account.bw_name}','${account.py_name}')">Very Important</button>` : `<span onclick="reboot('${account.bw_name}','${account.py_name}')" class="badge badge-success">Not necessary</span>`}</th>
-                    <th>
-                        <div class="custom-control custom-switch">
-                            <input type="checkbox" ${ (account.assingForce) ? 'checked="true"' : ''} class="custom-control-input" id="${id}" data-account="${account.token}">
-                            <label onclick="switchForce('${id}')" class="custom-control-label" for="${id}"></label>
-                        </div>    
-                    </th>
-                  </tr>
-            `;
+                /* Add function of change to forceAsing */
+                let id = (Math.random()*100000).toFixed(0)+account.nombre.replace(' ','');
+                return `
+                    <tr>
+                        <th scope="row">${account.nombre}</th>
+                        <th scope="row">${account.numero}</th>
+                        <th scope="row">${Object.keys(account.usersLogin).length}</th>
+                        <th scope="row">${Object.keys(account.chats).length}</th>
+                        <th scope="row">${(account.accountDown) ? '<span class="badge badge-danger">Offline</span>' : '<span class="badge badge-success">Online</span>'}</th>
+                        <th scope="row">${(account.whatsAppJoin) ? button('success','Online') : button('warning','login','getQr',account.socketId)}</th>
+                        <th scope="row">${button('info','screenShot','getScreen',account.socketId)}</th>
+                        <th scope="row">${(account.accountDown) ? `<button class="btn btn-danger" onclick="reboot('${account.bw_name}','${account.py_name}')">Very Important</button>` : `<span onclick="reboot('${account.bw_name}','${account.py_name}')" class="badge badge-success">Not necessary</span>`}</th>
+                        <th>
+                            <div class="custom-control custom-switch">
+                                <input type="checkbox" ${ (account.assingForce) ? 'checked="true"' : ''} class="custom-control-input" id="${id}" data-account="${account.token}">
+                                <label onclick="switchForce('${id}')" class="custom-control-label" for="${id}"></label>
+                            </div>    
+                        </th>
+                    </tr>
+                `;
+            }else{
+                return ''
+            }
+            
         }
 
         /********************************
@@ -428,9 +433,10 @@
             offline()
 
             /* Start the connection with the socket */
-            socket = io('http://'+ip+':3000/?token='+token);
+            socket = io(ip+':3000/?token='+token);
     
             socket.on('connect',() => {
+                console.log('----Z conectoi')
 
                 /******************************************
                 * If the auth is successfully, change the *
@@ -439,6 +445,7 @@
                 ******************************************/
                 
                 online()
+                socket.emit('getAllTest')
     
                 socket.on('disconnect',(data) => offline() )
     
@@ -446,13 +453,19 @@
     
             });
 
+
+            socket.on('putGetAll', (data) => { 
+                console.log('Data', data)
+            })
+
             /*************************************
             *  Receive all accounts join in the  *
             *  moment of login.                  *
             *  Last Update : 26-03-19 gama       *
             *************************************/
             socket.on('getAllAccounts',(_accounts) => {
-                accounts = _accounts;
+                console.log('llego xc', _accounts)
+                accounts = JSON.parse(_accounts);
                 changesInAccounts(accounts)
                 updateTargets(accounts)
             })
@@ -478,7 +491,6 @@
                 }
                 changesInAccounts(accounts)
                 updateTargets(accounts)
-                console.log('changeAccount',account)
             })
 
             /********************************
@@ -507,7 +519,7 @@
                     alert('Error '+file.error)
                     $('#qr_modal').modal('hide')
                 }else{
-                    $('#img_qr').html(`<img src="http://${ip}:3000/file?id=${file.file}" style="width: 100%;" id="shot">`)
+                    $('#img_qr').html(`<img src="${ip}:3000/file?id=${file.file}" style="width: 100%;" id="shot">`)
                     $('#close-qr').css('display','block')
                 }
             })
@@ -529,7 +541,7 @@
                     alert('Error '+file.error)
                     $('#qr_modal').modal('hide')
                 }else{
-                    $('#img_qr').html(`<img src="http://${ip}:3000/file?id=${file.file}" style="width: 100%;" id="shot">`)
+                    $('#img_qr').html(`<img src="${ip}:3000/file?id=${file.file}" style="width: 100%;" id="shot">`)
                     $('#close-qr').css('display','block')
                 }
             })
